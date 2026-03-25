@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="CRM Шоурум">
+  <title>CRM Шоурум</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #F5F3EF; --surface: #FFFFFF; --border: #E8E4DC;
+      --text: #1A1814; --text-sec: #6A655C; --text-muted: #AAA49A;
+      --accent: #B5784F; --accent-bg: #F6EDE4; --accent-dark: #8C5C39;
+      --tab-h: 72px; --safe-b: env(safe-area-inset-bottom,0px); --safe-t: env(safe-area-inset-top,0px);
+      --r: 18px; --r-sm: 12px;
+    }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); height:100dvh; overflow:hidden; font-size:17px; }
+    #app { max-width:800px; margin:0 auto; height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
+    .screen { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(var(--tab-h) + var(--safe-b) + 28px); }
+
+    /* TOPBAR */
+    .topbar { background:var(--surface); padding:calc(var(--safe-t) + 10px) 18px 14px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .topbar-main { flex:1; min-width:0; }
+    .topbar-title {  font-size:28px; font-weight:700; letter-spacing:-0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .topbar-sub { font-size:13px; color:var(--text-muted); margin-top:1px; }
+    .topbar-count { font-size:16px; color:var(--text-muted); font-weight:600; }
+    .btn-back { width:42px; height:42px; border:none; background:var(--bg); border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .btn-icon { width:42px; height:42px; border:none; background:transparent; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .btn-save { background:var(--accent); color:#fff; border:none; padding:10px 22px; border-radius:22px; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700; cursor:pointer; flex-shrink:0; }
+
+    /* TABBAR */
+    .tabbar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:800px; background:var(--surface); border-top:1px solid var(--border); display:flex; padding-bottom:var(--safe-b); z-index:100; }
+    .tab { flex:1; padding:10px 8px 7px; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; border:none; background:transparent; color:var(--text-muted); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; transition:color .15s; }
+    .tab.active { color:var(--accent); }
+    .tab-icon { font-size:24px; line-height:1; }
+
+    /* FAB */
+    .fab { position:fixed; bottom:calc(var(--tab-h) + var(--safe-b) + 20px); right:max(20px,calc(50vw - 400px + 20px)); width:62px; height:62px; border-radius:31px; background:var(--accent); color:#fff; border:none; font-size:28px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 28px rgba(181,120,79,.45); z-index:50; }
+
+    /* SEARCH */
+    .search-wrap { padding:14px 18px; background:var(--surface); border-bottom:1px solid var(--border); }
+    .search-input { width:100%; padding:13px 18px; border-radius:var(--r-sm); border:none; background:var(--bg); font-family:'DM Sans',sans-serif; font-size:17px; color:var(--text); outline:none; }
+    .search-input::placeholder { color:var(--text-muted); }
+
+    /* CHIPS */
+    .filters { display:flex; gap:8px; padding:12px 18px; overflow-x:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
+    .filters::-webkit-scrollbar { display:none; }
+    .chip { padding:9px 16px; border-radius:22px; border:1.5px solid var(--border); background:transparent; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:var(--text-sec); white-space:nowrap; cursor:pointer; }
+    .chip.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .chip-div { width:1px; background:var(--border); margin:4px 3px; flex-shrink:0; }
+
+    /* CARDS */
+    .list { padding:14px 18px; display:flex; flex-direction:column; gap:12px; }
+    .card { background:var(--surface); border-radius:var(--r); padding:16px 18px; display:flex; align-items:center; gap:16px; cursor:pointer; border:1px solid var(--border); }
+    .card:active { opacity:.8; }
+    .card-name {  font-size:22px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    /* AVATAR */
+    .ava { flex-shrink:0; overflow:hidden; background:var(--accent-bg); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent);  }
+    .ava img { width:100%; height:100%; object-fit:cover; display:block; }
+
+    /* BADGES */
+    .badges { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+    .badge { font-size:12px; font-weight:600; padding:4px 9px; border-radius:7px; line-height:1.4; }
+    .bd{background:#EEF2FF;color:#3730A3} .bs{background:#F5F3FF;color:#6D28D9} .bo{background:#F3F4F6;color:#4B5563}
+    .bp{background:#FEF3C7;color:#92400E} .bb{background:#D1FAE5;color:#065F46}
+    .bw{background:#F3F4F6;color:#374151} .bi{background:#FEF9C3;color:#713F12} .bc{background:#DCFCE7;color:#14532D}
+
+    /* DETAIL HEADER */
+    .det-header { background:var(--surface); border-bottom:1px solid var(--border); padding:28px 20px 24px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+    .det-name {  font-size:34px; font-weight:700; text-align:center; letter-spacing:-0.3px; line-height:1.15; }
+
+    /* SECTIONS */
+    .sec { margin:14px 18px; background:var(--surface); border-radius:var(--r); border:1px solid var(--border); overflow:hidden; }
+    .sec-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px 10px; border-bottom:1px solid var(--border); }
+    .sec-head-title { font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.2px; }
+    .btn-edit-sec { background:var(--bg); border:none; border-radius:20px; padding:7px 14px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; color:var(--text-sec); cursor:pointer; }
+    .info-row { padding:13px 18px; display:flex; align-items:flex-start; gap:14px; border-top:1px solid var(--border); }
+    .info-row:first-of-type { border-top:none; }
+    .info-lbl { font-size:13px; color:var(--text-muted); font-weight:600; width:130px; flex-shrink:0; padding-top:2px; }
+    .info-val { font-size:17px; color:var(--text); font-weight:400; flex:1; line-height:1.45; }
+    .info-val a { color:var(--accent); text-decoration:none; }
+    .cmt-block { padding:14px 18px; border-top:1px solid var(--border); }
+    .cmt-block:first-of-type { border-top:none; }
+    .cmt-lbl { font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+    .cmt-val { font-size:17px; font-weight:400; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+    .cmt-empty { font-size:16px; color:var(--text-muted); font-style:italic; }
+
+    /* FORM */
+    .fsec { margin:14px 18px; background:var(--surface); border-radius:var(--r); border:1px solid var(--border); overflow:hidden; }
+    .frow { padding:0 18px; border-top:1px solid var(--border); }
+    .frow:first-child { border-top:none; }
+    .flbl { font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; padding-top:14px; display:block; }
+    .finput { width:100%; padding:9px 0 14px; border:none; background:transparent; font-family:'DM Sans',sans-serif; font-size:18px; color:var(--text); font-weight:400; outline:none; }
+    .finput::placeholder { color:var(--text-muted); }
+    .ftarea { width:100%; padding:9px 0 14px; border:none; background:transparent; font-family:'DM Sans',sans-serif; font-size:18px; color:var(--text); font-weight:400; outline:none; resize:none; min-height:80px; line-height:1.6; overflow:hidden; }
+    .ftarea::placeholder { color:var(--text-muted); }
+    .opt-row { display:flex; flex-direction:column; gap:8px; padding:10px 0 15px; }
+    .opt-btn { padding:14px 16px; border:1.5px solid var(--border); border-radius:var(--r-sm); background:transparent; font-family:'DM Sans',sans-serif; font-size:17px; font-weight:500; color:var(--text-sec); text-align:left; cursor:pointer; }
+    .opt-btn.sel { background:var(--accent-bg); border-color:var(--accent); color:var(--accent-dark); font-weight:700; }
+    .photo-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; padding:24px; }
+    .photo-circle { width:100px; height:100px; border-radius:20px; background:var(--bg); cursor:pointer; border:2px dashed var(--border); display:flex; align-items:center; justify-content:center; font-size:40px; overflow:hidden; }
+    .photo-circle img { width:100%; height:100%; object-fit:cover; }
+    .photo-lbl { font-size:15px; color:var(--accent); font-weight:700; cursor:pointer; }
+
+    /* EVENTS LIST */
+    .ev-card { background:var(--surface); border-radius:var(--r); border:1px solid var(--border); overflow:hidden; }
+    .ev-card-head { padding:18px 20px 14px; }
+    .ev-name {  font-size:24px; font-weight:600; }
+    .ev-date { font-size:15px; color:var(--text-sec); margin-top:5px; font-weight:500; }
+    .ev-desc { font-size:16px; color:var(--text-sec); margin-top:10px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+    .ev-edit-btn { display:inline-flex; align-items:center; gap:6px; background:var(--bg); border:none; border-radius:20px; padding:8px 14px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:var(--text-sec); cursor:pointer; margin-top:12px; }
+    .ev-sep { height:1px; background:var(--border); }
+    .ev-p-head { padding:10px 20px 8px; font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+    .ev-p-row { padding:11px 20px; display:flex; align-items:center; gap:12px; border-top:1px solid var(--border); }
+    .ev-p-none { padding:12px 20px 16px; font-size:15px; color:var(--text-muted); font-style:italic; }
+
+    /* EVENT DETAIL */
+    .ec-row { padding:13px 18px; display:flex; align-items:center; gap:12px; border-top:1px solid var(--border); }
+    .ec-row:first-of-type { border-top:none; }
+    .status-sel { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; padding:7px 10px; border-radius:9px; border:none; outline:none; cursor:pointer; -webkit-appearance:none; appearance:none; }
+    .sw{background:#F3F4F6;color:#374151} .si{background:#FEF9C3;color:#713F12} .sc{background:#DCFCE7;color:#14532D}
+    .btn-rm { width:30px; height:30px; border-radius:50%; background:#FEE2E2; border:none; color:#EF4444; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .btn-add-sm { padding:7px 16px; background:var(--accent-bg); border:none; border-radius:22px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700; color:var(--accent); cursor:pointer; }
+
+    /* DELETE */
+    .btn-del { width:100%; padding:16px 20px; border:2px solid #FECACA; background:transparent; border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:17px; font-weight:600; color:#DC2626; cursor:pointer; }
+
+    /* MODAL */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200; display:flex; align-items:flex-end; }
+    .sheet { background:var(--surface); width:100%; max-width:800px; margin:0 auto; border-radius:24px 24px 0 0; padding:16px 0 calc(var(--safe-b) + 28px); max-height:80dvh; overflow-y:auto; }
+    .sheet-handle { width:44px; height:5px; background:var(--border); border-radius:3px; margin:0 auto 16px; }
+    .sheet-title {  font-size:22px; font-weight:700; padding:0 22px 14px; border-bottom:1px solid var(--border); }
+    .sheet-row { display:flex; align-items:center; gap:14px; padding:14px 22px; cursor:pointer; border-bottom:1px solid var(--border); }
+    .sheet-row:active { background:var(--bg); }
+    .sheet-row:last-child { border-bottom:none; }
+
+    /* CONFIRM */
+    .confirm-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:300; display:flex; align-items:center; justify-content:center; padding:24px; }
+    .confirm-box { background:var(--surface); border-radius:22px; padding:26px; width:100%; max-width:380px; }
+    .confirm-title {  font-size:24px; font-weight:700; margin-bottom:10px; }
+    .confirm-text { font-size:16px; color:var(--text-sec); margin-bottom:22px; line-height:1.5; }
+    .confirm-btns { display:flex; gap:10px; }
+    .btn-cancel-c { flex:1; padding:15px; border-radius:13px; background:var(--bg); border:none; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700; color:var(--text); cursor:pointer; }
+    .btn-danger-c { flex:1; padding:15px; border-radius:13px; background:#EF4444; border:none; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700; color:#fff; cursor:pointer; }
+
+    /* EMPTY */
+    .empty { text-align:center; padding:72px 24px; color:var(--text-muted); }
+    .empty-ico { font-size:56px; margin-bottom:16px; }
+    .empty-txt { font-size:20px; font-weight:700;  }
+    .empty-sub { font-size:16px; margin-top:8px; }
+    .spacer { height:24px; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const STORE='crm_showroom_v3';
+const CL_CLOUD='dwqfyesgd';
+const CL_PRESET='crm_photos';
+const CL_URL='https://api.cloudinary.com/v1_1/'+CL_CLOUD+'/image/upload';
+
+function getToken(){return localStorage.getItem('crm_at_token')||'';}
+function getBase(){return localStorage.getItem('crm_at_base')||'';}
+function getAT(){return'https://api.airtable.com/v0/'+getBase()+'/';}
+function getHeaders(){return{'Authorization':'Bearer '+getToken(),'Content-Type':'application/json'};}
+// Aliases for compatibility
+const AT_TOKEN=getToken();
+const AT_BASE=getBase();
+function AT(){return getAT();}
+function AT_HEADERS(){return getHeaders();}
+
+function loadLocal(){try{const r=localStorage.getItem(STORE);if(r)return JSON.parse(r);}catch(e){}return{contacts:[],events:[],links:[]};}
+function saveLocal(){try{localStorage.setItem(STORE,JSON.stringify({contacts:S.contacts,events:S.events,links:S.links}));}catch(e){}}
+
+// Fetch all records from a table (handles pagination)
+async function atGetAll(table){
+  let records=[]; let offset=null;
+  do {
+    const url=getAT()+encodeURIComponent(table)+(offset?'?offset='+offset:'');
+    const r=await fetch(url,{headers:getHeaders()});
+    const d=await r.json();
+    if(d.records) records=records.concat(d.records);
+    offset=d.offset||null;
+  } while(offset);
+  return records;
+}
+
+// Create records in batches of 10
+async function atCreate(table, objects){
+  const batches=[];
+  for(let i=0;i<objects.length;i+=10) batches.push(objects.slice(i,i+10));
+  const ids=[];
+  for(const batch of batches){
+    const r=await fetch(getAT()+encodeURIComponent(table),{
+      method:'POST', headers:getHeaders(),
+      body:JSON.stringify({records:batch.map(o=>({fields:o}))})
+    });
+    const d=await r.json();
+    if(d.records) d.records.forEach(rec=>ids.push(rec.id));
+  }
+  return ids;
+}
+
+// Delete records in batches of 10
+async function atDeleteAll(table){
+  const records=await atGetAll(table);
+  const ids=records.map(r=>r.id);
+  for(let i=0;i<ids.length;i+=10){
+    const batch=ids.slice(i,i+10);
+    const qs=batch.map(id=>'records[]='+id).join('&');
+    await fetch(getAT()+encodeURIComponent(table)+'?'+qs,{method:'DELETE',headers:getHeaders()});
+  }
+}
+
+async function fetchRemote(){
+  try{
+    const [cr,er,lr]=await Promise.all([
+      atGetAll('Contacts'), atGetAll('Events'), atGetAll('Links')
+    ]);
+    // Parse json field back to objects, restore photos from local cache
+    const localSaved=loadLocal();
+    const photoMap={};
+    (localSaved.contacts||[]).forEach(c=>{if(c.photo)photoMap[c.id]=c.photo;});
+    
+    S.contacts=cr.map(r=>{
+      try{const o=JSON.parse(r.fields.json||'{}');o.photo=photoMap[o.id]||o.photo||null;return o;}catch(e){return null;}
+    }).filter(Boolean);
+    S.events=er.map(r=>{
+      try{return JSON.parse(r.fields.json||'{}');}catch(e){return null;}
+    }).filter(Boolean);
+    S.links=lr.map(r=>{
+      try{return JSON.parse(r.fields.json||'{}');}catch(e){return null;}
+    }).filter(Boolean);
+    saveLocal();
+  }catch(e){console.log('Airtable fetch failed, using local',e);}
+}
+
+async function persist(){
+  saveLocal();
+  try{
+    // Strip photos - store locally only
+    // Strip base64 photos (keep only Cloudinary https:// URLs)
+    const contacts=S.contacts.map(c=>{const o=Object.assign({},c);if(o.photo&&o.photo.startsWith("data:"))o.photo="";return o;});
+    // Delete all + recreate (simple & reliable for small datasets)
+    await Promise.all([
+      atDeleteAll('Contacts'),
+      atDeleteAll('Events'),
+      atDeleteAll('Links')
+    ]);
+    await Promise.all([
+      contacts.length>0 ? atCreate('Contacts', contacts.map(o=>({Name:o.id, json:JSON.stringify(o)}))) : Promise.resolve(),
+      S.events.length>0 ? atCreate('Events', S.events.map(o=>({Name:o.id, json:JSON.stringify(o)}))) : Promise.resolve(),
+      S.links.length>0 ? atCreate('Links', S.links.map(o=>({Name:o.id, json:JSON.stringify(o)}))) : Promise.resolve()
+    ]);
+  }catch(e){console.log('Airtable save failed',e);}
+}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+
+const saved=loadLocal();
+const S={
+  view:'contacts',contacts:saved.contacts||[],events:saved.events||[],links:saved.links||[],
+  selContact:null,selEvent:null,editCId:null,editEId:null,
+  filterCat:'all',filterType:'all',search:'',modal:null,confirm:null,tempPhoto:null,noteField:null,uploadingPhoto:false,
+  syncing:false
+};
+
+function go(view,params={}){Object.assign(S,params);S.view=view;if(view.startsWith('contact_form'))S.tempPhoto=null;S.modal=null;render();}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function initials(n){if(!n)return'?';const p=n.trim().split(/\s+/);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():n.slice(0,2).toUpperCase();}
+function catLabel(v){return v==='designer'?'Дизайнер-архитектор':v==='supplier'?'Поставщик':'Прочие';}
+function catClass(v){return v==='designer'?'bd':v==='supplier'?'bs':'bo';}
+function typeLabel(v){return v==='premium'?'Премиум и люкс':'Бюджет и эконом';}
+function typeClass(v){return v==='premium'?'bp':'bb';}
+function stLabel(v){return v==='want'?'Хочу пригласить':v==='invited'?'Пригласил':'Подтвердил явку';}
+function stClass(v){return v==='want'?'sw':v==='invited'?'si':'sc';}
+function stBadge(v){return v==='want'?'bw':v==='invited'?'bi':'bc';}
+const RU_DAYS=['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+function fmtDate(d){if(!d)return'—';try{const dt=new Date(d+'T12:00:00');return RU_DAYS[dt.getDay()]+', '+dt.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});}catch(e){return d;}}
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function maskPhone(v){const d=v.replace(/\D/g,'').replace(/^[78]/,'').slice(0,10);if(!d)return'';let r='+7 (';r+=d.slice(0,3);if(d.length>3)r+=') '+d.slice(3,6);if(d.length>6)r+='-'+d.slice(6,8);if(d.length>8)r+='-'+d.slice(8,10);return r;}
+function ava(c,size,rad){const s=size||60;const r=rad||14;const photo=(S.tempPhoto&&S.editCId===(c&&c.id))?S.tempPhoto:(c&&c.photo);if(photo)return`<div class="ava" style="width:${s}px;height:${s}px;border-radius:${r}px;"><img src="${photo}"></div>`;const fs=Math.floor(s*0.36);return`<div class="ava" style="width:${s}px;height:${s}px;border-radius:${r}px;font-size:${fs}px;">${initials(c&&c.name)}</div>`;}
+
+
+function vSetup(){
+  return`<div style="display:flex;align-items:center;justify-content:center;height:100dvh;background:var(--bg);padding:24px;">
+    <div style="background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:32px;width:100%;max-width:420px;">
+      <div style="font-size:28px;font-weight:800;margin-bottom:8px;">CRM Шоурум</div>
+      <div style="font-size:15px;color:var(--text-muted);margin-bottom:28px;">Первоначальная настройка</div>
+      <label style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Airtable Token</label>
+      <input id="setup-token" type="password" placeholder="patXXX..."
+        style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:16px;margin:8px 0 20px;outline:none;background:var(--bg);">
+      <label style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Airtable Base ID</label>
+      <input id="setup-base" type="text" placeholder="appXXXXXXXX"
+        style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:16px;margin:8px 0 28px;outline:none;background:var(--bg);">
+      <button onclick="saveSetup()"
+        style="width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;cursor:pointer;">
+        Войти
+      </button>
+    </div>
+  </div>`;
+}
+
+function saveSetup(){
+  const token=document.getElementById('setup-token').value.trim();
+  const base=document.getElementById('setup-base').value.trim();
+  if(!token||!base){alert('Заполните оба поля');return;}
+  localStorage.setItem('crm_at_token',token);
+  localStorage.setItem('crm_at_base',base);
+  render();
+  fetchRemote().then(()=>render());
+}
+
+function render(){
+  const app=document.getElementById('app');
+  if(!localStorage.getItem('crm_at_token')||!localStorage.getItem('crm_at_base')){
+    app.innerHTML=vSetup();return;
+  }
+  let h='';
+  if(S.view==='contacts')h=vContacts();
+  else if(S.view==='contact_detail')h=vContactDetail();
+  else if(S.view==='contact_form_info')h=vContactFormInfo();
+  else if(S.view==='contact_form_note')h=vContactFormNote();
+  else if(S.view==='events')h=vEvents();
+  else if(S.view==='event_detail')h=vEventDetail();
+  else if(S.view==='event_form')h=vEventForm();
+  if(S.modal==='addToEvent')h+=vAddToEventModal();
+  if(S.modal==='addContactToEvent')h+=vAddContactToEventModal();
+  if(S.confirm)h+=vConfirm();
+  h+=vTabBar();
+  app.innerHTML=h;
+  app.querySelectorAll('.ftarea').forEach(ta=>{
+    ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';
+    ta.addEventListener('input',function(){this.style.height='auto';this.style.height=this.scrollHeight+'px';});
+  });
+}
+
+function vTabBar(){
+  const inC=['contacts','contact_detail','contact_form_info','contact_form_note'].includes(S.view);
+  const inE=['events','event_detail','event_form'].includes(S.view);
+  return`<div class="tabbar"><button class="tab ${inC?'active':''}" onclick="go('contacts')"><span class="tab-icon">👥</span>Контакты</button><button class="tab ${inE?'active':''}" onclick="go('events')"><span class="tab-icon">🎪</span>Мероприятия</button></div>`;
+}
+
+function vContacts(){
+  let list=S.contacts;
+  if(S.search){const q=S.search.toLowerCase();list=list.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.source||'').toLowerCase().includes(q));}
+  if(S.filterCat!=='all')list=list.filter(c=>c.category===S.filterCat);
+  if(S.filterType!=='all')list=list.filter(c=>c.contactType===S.filterType);
+  const chips=[{k:'all',l:'Все'},{k:'designer',l:'Дизайнеры'},{k:'supplier',l:'Поставщики'},{k:'other',l:'Прочие'}];
+  const types=[{k:'all',l:'Все сегменты'},{k:'premium',l:'⭐ Премиум'},{k:'budget',l:'Эконом'}];
+  const cards=list.length===0
+    ?`<div class="empty"><div class="empty-ico">👤</div><div class="empty-txt">${S.search||S.filterCat!=='all'||S.filterType!=='all'?'Ничего не найдено':'Контактов пока нет'}</div><div class="empty-sub">${S.search||S.filterCat!=='all'||S.filterType!=='all'?'':'Нажмите + чтобы добавить'}</div></div>`
+    :list.map(c=>`<div class="card" onclick="go('contact_detail',{selContact:'${c.id}'})">
+        ${ava(c,64,14)}
+        <div style="flex:1;min-width:0;">
+          <div class="card-name">${esc(c.name)||'<em style="color:var(--text-muted)">Без имени</em>'}</div>
+          <div class="badges"><span class="badge ${catClass(c.category)}">${catLabel(c.category)}${c.category==='other'&&c.catComment?' · '+esc(c.catComment):''}</span>${c.contactType?`<span class="badge ${typeClass(c.contactType)}">${typeLabel(c.contactType)}</span>`:''}</div>
+        </div>
+        <span style="color:var(--text-muted);font-size:24px;">›</span>
+      </div>`).join('');
+  return`<div class="topbar"><div class="topbar-main"><div class="topbar-title">Контакты</div></div><span class="topbar-count">${S.contacts.length}</span></div>
+    <div class="screen">
+      <div class="search-wrap"><input class="search-input" type="search" placeholder="🔍  Поиск по имени или источнику..." value="${esc(S.search)}" oninput="S.search=this.value;render()"></div>
+      <div class="filters">${chips.map(c=>`<button class="chip ${S.filterCat===c.k?'active':''}" onclick="S.filterCat='${c.k}';render()">${c.l}</button>`).join('')}<div class="chip-div"></div>${types.map(c=>`<button class="chip ${S.filterType===c.k?'active':''}" onclick="S.filterType='${c.k}';render()">${c.l}</button>`).join('')}</div>
+      <div class="list">${cards}</div><div class="spacer"></div>
+    </div>
+    <button class="fab" onclick="go('contact_form_info',{editCId:null})">＋</button>`;
+}
+
+function vContactDetail(){
+  const c=S.contacts.find(x=>x.id===S.selContact);
+  if(!c){go('contacts');return'';}
+  const myLinks=S.links.filter(l=>l.contactId===c.id);
+  const evRows=myLinks.length===0
+    ?`<div style="padding:14px 18px;color:var(--text-muted);font-size:16px;">Не добавлен ни в одно мероприятие</div>`
+    :myLinks.map(l=>{const ev=S.events.find(e=>e.id===l.eventId);if(!ev)return'';return`<div class="info-row"><div style="flex:1;"><div style="font-size:20px;font-weight:600;">${esc(ev.name)}</div><div style="font-size:14px;color:var(--text-muted);margin-top:2px;">${fmtDate(ev.date)}</div></div><span class="badge ${stBadge(l.status)}">${stLabel(l.status)}</span></div>`;}).join('');
+  const phone=c.phone?`<a href="tel:${c.phone.replace(/\D/g,'')}">${esc(c.phone)}</a>`:'<span style="color:var(--text-muted)">—</span>';
+  const social=c.social?`<a href="${c.social.startsWith('http')?esc(c.social):'https://'+esc(c.social)}" target="_blank" style="word-break:break-all;">${esc(c.social)}</a>`:'<span style="color:var(--text-muted)">—</span>';
+  return`<div class="topbar"><button class="btn-back" onclick="go('contacts')">←</button><div class="topbar-main"><div class="topbar-title">Контакт</div></div></div>
+    <div class="screen">
+      <div class="det-header">${ava(c,110,22)}<div class="det-name">${esc(c.name)||'Без имени'}</div><div class="badges"><span class="badge ${catClass(c.category)}">${catLabel(c.category)}${c.category==='other'&&c.catComment?' · '+esc(c.catComment):''}</span>${c.contactType?`<span class="badge ${typeClass(c.contactType)}">${typeLabel(c.contactType)}</span>`:''}</div></div>
+      <div class="sec">
+        <div class="sec-head"><span class="sec-head-title">Данные контакта</span><button class="btn-edit-sec" onclick="go('contact_form_info',{editCId:'${c.id}'})">✏️ Редактировать</button></div>
+        <div class="info-row"><span class="info-lbl">Телефон</span><span class="info-val">${phone}</span></div>
+        <div class="info-row"><span class="info-lbl">Соцсеть</span><span class="info-val">${social}</span></div>
+        <div class="info-row"><span class="info-lbl">Откуда</span><span class="info-val">${esc(c.source)||'<span style="color:var(--text-muted)">—</span>'}</span></div>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><span class="sec-head-title">Заметки</span></div>
+        <div class="cmt-block">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div class="cmt-lbl" style="margin-bottom:0;">Последнее общение</div>
+            <button class="btn-edit-sec" onclick="go('contact_form_note',{editCId:'${c.id}',noteField:'lastContact'})">✏️</button>
+          </div>
+          ${c.lastContact?`<div class="cmt-val">${esc(c.lastContact)}</div>`:'<div class="cmt-empty">Не заполнено</div>'}
+        </div>
+        <div class="cmt-block">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div class="cmt-lbl" style="margin-bottom:0;">Заметки о контакте</div>
+            <button class="btn-edit-sec" onclick="go('contact_form_note',{editCId:'${c.id}',noteField:'notes'})">✏️</button>
+          </div>
+          ${c.notes?`<div class="cmt-val">${esc(c.notes)}</div>`:'<div class="cmt-empty">Не заполнено</div>'}
+        </div>
+        <div class="cmt-block">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div class="cmt-lbl" style="margin-bottom:0;">История покупок</div>
+            <button class="btn-edit-sec" onclick="go('contact_form_note',{editCId:'${c.id}',noteField:'purchases'})">✏️</button>
+          </div>
+          ${c.purchases?`<div class="cmt-val">${esc(c.purchases)}</div>`:'<div class="cmt-empty">Не заполнено</div>'}
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><span class="sec-head-title">Мероприятия</span>${S.events.length>0?`<button class="btn-add-sm" onclick="S.modal='addContactToEvent';render()">＋ Добавить</button>`:''}</div>
+        ${evRows}
+      </div>
+      <div style="padding:8px 18px;"><button class="btn-del" onclick="askDel('contact','${c.id}')">Удалить контакт</button></div>
+      <div class="spacer"></div>
+    </div>`;
+}
+
+function vContactFormInfo(){
+  const isNew=!S.editCId;
+  const c=isNew?null:S.contacts.find(x=>x.id===S.editCId);
+  const v=(f,def='')=>esc((c&&c[f])||def);
+  const curCat=(c&&c.category)||'designer';
+  const curType=(c&&c.contactType)||'premium';
+  const photo=S.tempPhoto||(c&&c.photo);
+  return`<div class="topbar"><button class="btn-back" onclick="${isNew?"go('contacts')":"go('contact_detail',{selContact:'"+S.editCId+"'})"}">✕</button><div class="topbar-main"><div class="topbar-title">${isNew?'Новый контакт':'Данные контакта'}</div></div><button class="btn-save" onclick="saveContactInfo()">Сохранить</button></div>
+    <div class="screen">
+      <div class="fsec" style="margin-top:16px;"><div class="photo-wrap"><div class="photo-circle" onclick="document.getElementById('ph-inp').click()">${photo?`<img src="${photo}">`:'<span>📷</span>'}</div><label class="photo-lbl" for="ph-inp">Выбрать фото</label><input type="file" id="ph-inp" accept="image/*" style="display:none" onchange="onPhoto(event)"></div></div>
+      <div class="fsec"><div class="frow"><label class="flbl">Имя / Ник / Компания</label><input class="finput" id="f-name" type="text" placeholder="Введите имя или название..." value="${v('name')}"></div></div>
+      <div class="fsec">
+        <div class="frow"><label class="flbl">Кто это</label><div class="opt-row">
+          <button class="opt-btn ${curCat==='designer'?'sel':''}" onclick="pickOpt(this,'cat','designer','other-row')" data-grp="cat">Дизайнер-архитектор</button>
+          <button class="opt-btn ${curCat==='supplier'?'sel':''}" onclick="pickOpt(this,'cat','supplier','other-row')" data-grp="cat">Поставщик</button>
+          <button class="opt-btn ${curCat==='other'?'sel':''}" onclick="pickOpt(this,'cat','other','other-row')" data-grp="cat">Прочие</button>
+        </div></div>
+        <div class="frow" id="other-row" style="${curCat!=='other'?'display:none':''}"><label class="flbl">Уточните кто это</label><input class="finput" id="f-cat-cmt" type="text" placeholder="Например: девелопер, журналист..." value="${v('catComment')}"></div>
+      </div>
+      <div class="fsec"><div class="frow"><label class="flbl">Тип контакта</label><div class="opt-row">
+        <button class="opt-btn ${curType==='premium'?'sel':''}" onclick="pickOpt(this,'type','premium',null)" data-grp="type">Премиум и люкс</button>
+        <button class="opt-btn ${curType==='budget'?'sel':''}" onclick="pickOpt(this,'type','budget',null)" data-grp="type">Бюджет и эконом</button>
+      </div></div></div>
+      <div class="fsec">
+        <div class="frow"><label class="flbl">Откуда контакт</label><input class="finput" id="f-source" type="text" placeholder="Выставка, рекомендация, соцсети..." value="${v('source')}"></div>
+        <div class="frow"><label class="flbl">Соцсеть / Ссылка</label><input class="finput" id="f-social" type="url" placeholder="https://instagram.com/..." value="${v('social')}"></div>
+        <div class="frow"><label class="flbl">Телефон</label><input class="finput" id="f-phone" type="tel" placeholder="+7 (___) ___-__-__" value="${v('phone')}" oninput="this.value=maskPhone(this.value)" maxlength="18"></div>
+      </div>
+      ${!isNew?`<div style="padding:8px 18px;"><button class="btn-del" onclick="askDel('contact','${c.id}')">Удалить контакт</button></div>`:''}
+      <div class="spacer"></div>
+    </div>`;
+}
+
+function vContactFormNote(){
+  const c=S.contacts.find(x=>x.id===S.editCId);
+  if(!c){go('contacts');return'';}
+  const meta={
+    lastContact:{label:'Последнее общение',ph:'Когда виделись, о чём говорили...'},
+    notes:{label:'Заметки о контакте',ph:'Предпочтения, интересы, детали...'},
+    purchases:{label:'История покупок',ph:'Что покупал, когда, сумма...'}
+  };
+  const m=meta[S.noteField]||meta.notes;
+  const val=esc(c[S.noteField]||'');
+  return`<div class="topbar"><button class="btn-back" onclick="go('contact_detail',{selContact:'${c.id}'})">✕</button><div class="topbar-main"><div class="topbar-title">${m.label}</div><div class="topbar-sub">${esc(c.name)}</div></div><button class="btn-save" onclick="saveContactNote()">Сохранить</button></div>
+    <div class="screen">
+      <div class="fsec" style="margin-top:16px;">
+        <div class="frow"><label class="flbl">${m.label}</label><textarea class="ftarea" id="f-note-val" placeholder="${m.ph}" style="min-height:220px;">${val}</textarea></div>
+      </div>
+      <div class="spacer"></div>
+    </div>`;
+}
+
+function vEvents(){
+  const cards=S.events.length===0
+    ?`<div class="empty"><div class="empty-ico">🎪</div><div class="empty-txt">Мероприятий пока нет</div><div class="empty-sub">Нажмите + чтобы создать</div></div>`
+    :S.events.map(ev=>{
+        const lks=S.links.filter(l=>l.eventId===ev.id);
+        const parts=lks.length===0
+          ?`<div class="ev-p-none">Нет участников</div>`
+          :lks.map(l=>{const c=S.contacts.find(x=>x.id===l.contactId);if(!c)return'';return`<div class="ev-p-row">${ava(c,42,10)}<div style="flex:1;min-width:0;"><div style="font-size:19px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.name)}</div><div style="font-size:13px;color:var(--text-muted);">${catLabel(c.category)}</div></div><span class="badge ${stBadge(l.status)}">${stLabel(l.status)}</span></div>`;}).join('');
+        return`<div class="ev-card"><div class="ev-card-head"><div class="ev-name">${esc(ev.name)}</div><div class="ev-date">📅 ${fmtDate(ev.date)}</div>${ev.description?`<div class="ev-desc">${esc(ev.description)}</div>`:''}<button class="ev-edit-btn" onclick="go('event_detail',{selEvent:'${ev.id}'})">✏️ Редактировать участников</button></div><div class="ev-sep"></div><div class="ev-participants"><div class="ev-p-head">Участники · ${lks.length}</div>${parts}</div></div>`;
+      }).join('');
+  return`<div class="topbar"><div class="topbar-main"><div class="topbar-title">Мероприятия</div></div><span class="topbar-count">${S.events.length}</span></div>
+    <div class="screen"><div class="list">${cards}</div><div class="spacer"></div></div>
+    <button class="fab" onclick="go('event_form',{editEId:null})">＋</button>`;
+}
+
+function vEventForm(){
+  const isNew=!S.editEId;
+  const ev=isNew?null:S.events.find(e=>e.id===S.editEId);
+  return`<div class="topbar"><button class="btn-back" onclick="${isNew?"go('events')":"go('event_detail',{selEvent:'"+S.editEId+"'})"}">✕</button><div class="topbar-main"><div class="topbar-title">${isNew?'Новое мероприятие':'Редактировать'}</div></div><button class="btn-save" onclick="saveEvent()">Сохранить</button></div>
+    <div class="screen">
+      <div class="fsec" style="margin-top:16px;">
+        <div class="frow"><label class="flbl">Название</label><input class="finput" id="ev-name" type="text" placeholder="Открытие, презентация коллекции..." value="${ev?esc(ev.name):''}"></div>
+        <div class="frow"><label class="flbl">Дата проведения</label><input class="finput" id="ev-date" type="date" value="${ev?esc(ev.date):todayStr()}"></div>
+        <div class="frow"><label class="flbl">Описание</label><textarea class="ftarea" id="ev-desc" placeholder="Формат, тема, особые детали...">${ev?esc(ev.description||''):''}</textarea></div>
+      </div>
+      ${ev?`<div style="padding:8px 18px;"><button class="btn-del" onclick="askDel('event','${ev.id}')">Удалить мероприятие</button></div>`:''}
+      <div class="spacer"></div>
+    </div>`;
+}
+
+function vEventDetail(){
+  const ev=S.events.find(e=>e.id===S.selEvent);
+  if(!ev){go('events');return'';}
+  const lks=S.links.filter(l=>l.eventId===ev.id);
+  const rows=lks.length===0
+    ?`<div style="padding:14px 18px;color:var(--text-muted);font-size:16px;">Нет контактов — нажмите «+ Добавить»</div>`
+    :lks.map(l=>{const c=S.contacts.find(x=>x.id===l.contactId);if(!c)return'';return`<div class="ec-row">${ava(c,46,10)}<div style="flex:1;min-width:0;"><div style="font-size:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.name)}</div><div style="font-size:13px;color:var(--text-muted);">${catLabel(c.category)}</div></div><select class="status-sel ${stClass(l.status)}" id="st-${l.id}" onchange="updateStatus('${l.id}',this.value)"><option value="want" ${l.status==='want'?'selected':''}>Хочу пригласить</option><option value="invited" ${l.status==='invited'?'selected':''}>Пригласил</option><option value="confirmed" ${l.status==='confirmed'?'selected':''}>Подтвердил явку</option></select><button class="btn-rm" onclick="askDel('link','${l.id}')">✕</button></div>`;}).join('');
+  return`<div class="topbar"><button class="btn-back" onclick="go('events')">←</button><div class="topbar-main"><div class="topbar-title">${esc(ev.name)}</div><div class="topbar-sub">${fmtDate(ev.date)}</div></div><button class="btn-icon" onclick="go('event_form',{editEId:'${ev.id}'})">✏️</button></div>
+    <div class="screen">
+      <div class="sec" style="margin-top:16px;"><div class="sec-head"><span class="sec-head-title">Участники · ${lks.length}</span><button class="btn-add-sm" onclick="S.modal='addToEvent';render()">＋ Добавить</button></div>${rows}</div>
+      <div style="padding:8px 18px;"><button class="btn-del" onclick="askDel('event','${ev.id}')">Удалить мероприятие</button></div>
+      <div class="spacer"></div>
+    </div>`;
+}
+
+function vAddContactToEventModal(){
+  const c=S.contacts.find(x=>x.id===S.selContact);
+  if(!c)return'';
+  const existing=new Set(S.links.filter(l=>l.contactId===c.id).map(l=>l.eventId));
+  const avail=S.events.filter(e=>!existing.has(e.id));
+  const rows=avail.length===0
+    ?`<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:16px;">Нет доступных мероприятий</div>`
+    :avail.map(ev=>`<div class="sheet-row" onclick="addContactToEvent('${ev.id}')"><div style="flex:1;"><div style="font-size:21px;font-weight:600;">${esc(ev.name)}</div><div style="font-size:14px;color:var(--text-muted);margin-top:2px;">${fmtDate(ev.date)}</div></div><span style="font-size:22px;color:var(--text-muted);">＋</span></div>`).join('');
+  return`<div class="overlay" onclick="S.modal=null;render()"><div class="sheet" onclick="event.stopPropagation()"><div class="sheet-handle"></div><div class="sheet-title">Добавить в мероприятие</div>${rows}</div></div>`;
+}
+
+function vAddToEventModal(){
+  const existing=new Set(S.links.filter(l=>l.eventId===S.selEvent).map(l=>l.contactId));
+  const avail=S.contacts.filter(c=>!existing.has(c.id));
+  const rows=avail.length===0
+    ?`<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:16px;">Все контакты уже добавлены</div>`
+    :avail.map(c=>`<div class="sheet-row" onclick="addToEvent('${c.id}')">${ava(c,46,11)}<div style="flex:1;"><div style="font-size:21px;font-weight:600;">${esc(c.name)||'Без имени'}</div><div style="font-size:14px;color:var(--text-muted);">${catLabel(c.category)}</div></div><span style="font-size:22px;color:var(--text-muted);">＋</span></div>`).join('');
+  return`<div class="overlay" onclick="S.modal=null;render()"><div class="sheet" onclick="event.stopPropagation()"><div class="sheet-handle"></div><div class="sheet-title">Добавить контакт</div>${rows}</div></div>`;
+}
+
+function vConfirm(){
+  const{type}=S.confirm;
+  const t={contact:'Удалить контакт?',event:'Удалить мероприятие?',link:'Убрать контакт?'};
+  const tx={contact:'Контакт будет удалён безвозвратно.',event:'Мероприятие и все привязки будут удалены.',link:'Контакт будет убран из этого мероприятия.'};
+  return`<div class="confirm-overlay"><div class="confirm-box"><div class="confirm-title">${t[type]}</div><div class="confirm-text">${tx[type]}</div><div class="confirm-btns"><button class="btn-cancel-c" onclick="S.confirm=null;render()">Отмена</button><button class="btn-danger-c" onclick="execDel()">Удалить</button></div></div></div>`;
+}
+
+function pickOpt(btn,grp,val,toggleId){
+  document.querySelectorAll(`[data-grp="${grp}"]`).forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  if(toggleId){const el=document.getElementById(toggleId);if(el)el.style.display=val==='other'?'':'none';}
+}
+async function onPhoto(e){
+  const f=e.target.files[0];if(!f)return;
+  // Show local preview immediately
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const circle=document.querySelector('.photo-circle');
+    if(circle)circle.innerHTML=`<img src="${ev.target.result}">`;
+  };
+  reader.readAsDataURL(f);
+  // Upload to Cloudinary and store URL
+  S.uploadingPhoto=true;
+  try{
+    const fd=new FormData();
+    fd.append('file',f);
+    fd.append('upload_preset',CL_PRESET);
+    const r=await fetch(CL_URL,{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.secure_url){
+      S.tempPhoto=d.secure_url;
+      const circle=document.querySelector('.photo-circle');
+      if(circle)circle.innerHTML=`<img src="${S.tempPhoto}">`;
+    }
+  }catch(err){console.log('Cloudinary upload failed',err);}
+  S.uploadingPhoto=false;
+}
+
+async function saveContactInfo(){
+  if(S.uploadingPhoto){alert("Подождите — фото ещё загружается...");return;}
+  const isNew=!S.editCId;
+  const old=isNew?null:S.contacts.find(x=>x.id===S.editCId);
+  const catBtn=document.querySelector('[data-grp="cat"].sel');
+  const typeBtn=document.querySelector('[data-grp="type"].sel');
+  const catTxt=catBtn?catBtn.textContent.trim():'';
+  const category=catTxt==='Дизайнер-архитектор'?'designer':catTxt==='Поставщик'?'supplier':'other';
+  const typeTxt=typeBtn?typeBtn.textContent.trim():'';
+  const contactType=typeTxt==='Премиум и люкс'?'premium':'budget';
+  const contact=Object.assign({},old||{},{
+    id:isNew?uid():old.id,
+    name:(document.getElementById('f-name')?.value||'').trim(),
+    category,catComment:(document.getElementById('f-cat-cmt')?.value||'').trim(),
+    contactType,source:(document.getElementById('f-source')?.value||'').trim(),
+    social:(document.getElementById('f-social')?.value||'').trim(),
+    phone:(document.getElementById('f-phone')?.value||'').trim(),
+    photo:S.tempPhoto!==null?S.tempPhoto:(old?old.photo:null),
+    createdAt:isNew?new Date().toISOString():(old&&old.createdAt),
+  });
+  if(isNew){S.contacts.push(contact);}else{const i=S.contacts.findIndex(x=>x.id===old.id);if(i!==-1)S.contacts[i]=contact;}
+  S.tempPhoto=null;persist();go('contact_detail',{selContact:contact.id});
+}
+
+function saveContactNote(){
+  const c=S.contacts.find(x=>x.id===S.editCId);
+  if(!c)return;
+  c[S.noteField]=(document.getElementById('f-note-val')?.value||'').trim();
+  persist();go('contact_detail',{selContact:c.id});
+}
+
+function saveEvent(){
+  const isNew=!S.editEId;
+  const old=isNew?null:S.events.find(e=>e.id===S.editEId);
+  const name=(document.getElementById('ev-name')?.value||'').trim();
+  if(!name){alert('Введите название');return;}
+  const ev={id:isNew?uid():old.id,name,date:document.getElementById('ev-date')?.value||'',description:(document.getElementById('ev-desc')?.value||'').trim()};
+  if(isNew){S.events.push(ev);}else{const i=S.events.findIndex(e=>e.id===old.id);if(i!==-1)S.events[i]=ev;}
+  persist();go('event_detail',{selEvent:ev.id});
+}
+
+function addToEvent(contactId){S.links.push({id:uid(),contactId,eventId:S.selEvent,status:'want'});S.modal=null;persist();render();}
+function addContactToEvent(eventId){S.links.push({id:uid(),contactId:S.selContact,eventId,status:'want'});S.modal=null;persist();render();}
+function updateStatus(linkId,val){const l=S.links.find(x=>x.id===linkId);if(l){l.status=val;persist();}const sel=document.getElementById('st-'+linkId);if(sel)sel.className=`status-sel ${stClass(val)}`;}
+function askDel(type,id){S.confirm={type,id};render();}
+function execDel(){
+  const{type,id}=S.confirm;S.confirm=null;
+  if(type==='contact'){S.contacts=S.contacts.filter(c=>c.id!==id);S.links=S.links.filter(l=>l.contactId!==id);persist();go('contacts');}
+  else if(type==='event'){S.events=S.events.filter(e=>e.id!==id);S.links=S.links.filter(l=>l.eventId!==id);persist();go('events');}
+  else if(type==='link'){S.links=S.links.filter(l=>l.id!==id);persist();render();}
+}
+render();
+fetchRemote().then(()=>render());
+</script>
+</body>
+</html>
